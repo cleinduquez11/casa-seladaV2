@@ -51,46 +51,69 @@ con1.connect(function (err) {
 // login user
 router.get('/login', (req, res)=>{
   
-    // console.log(req);
- //   res.send(req.query.email);
 
     con1.query(`SELECT * FROM users`, function (err, result, fields) {
-        //console.log(result);
-        var credentials = [];
-        var isLogIn;
-        var isVerified;
+   
 
-            for (let i = 0; i < result.length; i++) {
+
+
+        let isLogin = result.find((res) => 
+            res.email == req.query.email && res.password == req.query.password && res.code == 'verified'
+        );
+
+        let isNotVerified = result.find((res) => 
+        res.email == req.query.email && res.password == req.query.password && res.code != 'verified'
+    );
+  
+  
+        if (isLogin != null ) {
+                  req.session.user = req.query.email ;
+            //res.send('Logged IN');
+             res.redirect('/route/dashboard');
+            
+        }
+        else if (isNotVerified != null ) {
+            req.session.user = req.query.email ;
+      //res.send('Logged IN');
+      res.redirect('/route/not_verified');
+      
+  }
+        else{
+            res.redirect('/route/error');
+        }
+
+        //     for (let i = 0; i < result.length; i++) {
      
-                if( result[i]['email'] == req.query.email && result[i]['password'] == req.query.password && result[i]['code']== 'verified'){
-                    isLogIn = true;
-                    isVerified = true;
-                    //res.end("Login Successful...!");
-                }
-                else if ( result[i]['email'] == req.query.email && result[i]['password'] == req.query.password && result[i]['code']!= 'verified') {
-                    isVerified = false;
-                }
-                else{
-                    isLogIn = false;
-                }
+        //         if( result[i]['email'] == req.query.email && result[i]['password'] == req.query.password && result[i]['code']== 'verified'){
+        //             isLogIn = true;
+                
+        //            // isVerified = true;
+        //             //res.end("Login Successful...!");
+        //         }
+        //         else if ( result[i]['email'] == req.query.email && result[i]['password'] == req.query.password && result[i]['code']!= 'verified') {
+        //             isVerified = false;
+        //         }
+        //         else{
+        //             isLogIn = false;
+        //         }
                
            
           
             
-         }
+        //  }
 
-         if (isLogIn && isVerified) {
-            req.session.user = req.query.email ;
-            //res.send('Logged IN');
-             res.redirect('/route/dashboard');
-         }
-         else if (isVerified ==false) {
-            res.redirect('/route/not_verified');
-         }
-         else
-         {
-            res.redirect('/route/error');
-         }
+        //  if (isLogIn) {
+        //     req.session.user = req.query.email ;
+        //     //res.send('Logged IN');
+        //      res.redirect('/route/dashboard');
+        //  }
+        //   else if (isVerified ==false) {
+        //     res.redirect('/route/not_verified');
+        //  }
+        //  else
+        //  {
+        //     res.redirect('/route/error');
+        //  }
 
 
 

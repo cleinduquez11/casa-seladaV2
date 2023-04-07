@@ -1390,9 +1390,9 @@ socket.on('chart2', function(args) {
 
 
               const mappedArr = args.map(innerArr => {
-                var ph = innerArr['PH'];
-                var ec = innerArr['EC'];
-                var water_temp = innerArr['WATER_TEMP'];
+                var ph = innerArr['Ph_Value'];
+                var ec = innerArr['Ec_Value'];
+                var water_temp = innerArr['Water_Temperature'];
                 var dateStr= innerArr['DATE'];
                 var date = new Date(dateStr);
                 var formattedDate = date.toLocaleDateString('en-US', {
@@ -1472,8 +1472,8 @@ socket.on('chart2', function(args) {
 
 
                     const mappedArr1 = args1.map(innerArr1 => {
-                        var humidity = innerArr1['HUMIDITY'];
-                        var roomtemp = innerArr1['ROOM_TEMP'];
+                        var humidity = innerArr1['Humidity'];
+                        var roomtemp = innerArr1['Room_Temp'];
                         var dateStr= innerArr1['DATE'];
                         var date = new Date(dateStr);
                         var formattedDate = date.toLocaleDateString('en-US', {

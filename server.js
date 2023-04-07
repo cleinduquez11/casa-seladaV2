@@ -19,12 +19,18 @@ const io = require("socket.io")(server);
 var mysql = require('mysql');
 //const { send } = require("process");
 
+
+
+//Create a connection to the database named sensors, this database is for the sensors and actuators status and readings
 var con = mysql.createConnection({
     host: "localhost",
     user: "root",
     password: "",
-    database: "try"
+    database: "sensors"
 });
+
+
+//Create a connection to a database named login this database is for users credentials
 var con1 = mysql.createConnection({
     host: "localhost",
     user: "root",
@@ -43,7 +49,7 @@ let transporter = nodemailer.createTransport({
     secure: true,
     auth: {
         user: 'flexerfly@gmail.com',
-        pass: 'qzccbagiccvnqfot'
+        pass: 'hevztpyyatyhrxrb'
     }
 });
 
@@ -62,6 +68,63 @@ app.use(session({
     saveUninitialized: true,
 
 }));
+
+
+//This is the API endpoint for GET requests of the system's sensors
+app.get('/api', function (req, res) {
+
+  res.render('api_endpoint');
+// console.log(req.query.water_temp)
+  con.query(`INSERT INTO sensorreadings1 (id, Water_Temperature, Ph_Value, Ec_Value) VALUES (?, ?, ?, ?);`,[null,req.query.water_temp,req.query.ph_val,req.query.ec_val], function (err, result, fields) {
+
+      // if (err) throw err;
+//console.log("Success");
+      //console.log(result[0]['fan_status']);
+  });
+  con.query(`INSERT INTO sensorreadings2 (id, Humidity, Room_Temp) VALUES (?, ? ,?);`,[null,req.query.humid,req.query.room_temp], function (err, result, fields) {
+      if (req.query.room_temp !=null ) {
+          con.query("SELECT * FROM `status`", function (err, result, fields) {
+
+            if (req.query.room_temp >= 26 && (result[0]['fan_status'] == "ON")) {
+
+              const url = "http://192.168.1.245/cm?cmnd=Power%20On";
+            //  request.get(url, (error, response, body) => {});
+            } else {
+              const url = "http://192.168.1.245/cm?cmnd=Power%20Off";
+             // request.get(url, (error, response, body) => {});
+                 
+            }
+          });
+               
+      }
+      if (req.query.humid !=null) {
+          con.query("SELECT * FROM `status`", function (err, result, fields) {
+
+            if (req.query.humid <= 80 && result[0]['mist_status'] == "ON") {
+              const url = "http://192.168.1.107/cm?cmnd=Power%20On";
+              // request.get(url, (error, response, body) => {});
+            } else {
+              const url = "http://192.168.1.107/cm?cmnd=Power%20Off";
+              // request.get(url, (error, response, body) => {});
+            }
+
+          });
+          
+      }
+
+  });
+
+ 
+
+
+
+  
+
+
+  
+
+ // console.log(req);
+});
 
 io.sockets.on("connection", socket => {
     
@@ -90,7 +153,7 @@ io.sockets.on("connection", socket => {
         io.emit("light_status", result[0]['light_status']);
         io.emit("pump_status", result[0]['pump_status']);
         io.emit("mist_status", result[0]['mist_status']);
-        io.emit("aero_status", result[0]['aerator']);
+        io.emit("aero_status", result[0]['aerator_status']);
   
         // //console.log(result[0]);
   
@@ -258,9 +321,9 @@ io.sockets.on("connection", socket => {
     socket.on("aerator", (arg) => {
   
       if (arg == true) {
-        io.emit("aerator", arg);
+        io.emit("aero_status", arg);
         const url = "http://192.168.1.158/cm?cmnd=Power%20On";
-        con.query(` UPDATE status SET aerator = 'ON' WHERE status.id = 1;`, function (err, result, fields) {
+        con.query(` UPDATE status SET aerator_status = 'ON' WHERE status.id = 1;`, function (err, result, fields) {
   
           // if (err) throw err;
           ////console.log(result[0]['fan_status']);
@@ -274,9 +337,9 @@ io.sockets.on("connection", socket => {
         //  //console.log(arg); // world
       }
       else {
-        io.emit("aerator", arg);
+        io.emit("aero_status", arg);
         const url = "http://192.168.1.158/cm?cmnd=Power%20Off";
-        con.query(` UPDATE status SET aerator = 'OFF' WHERE status.id = 1;`, function (err, result, fields) {
+        con.query(` UPDATE status SET aerator_status = 'OFF' WHERE status.id = 1;`, function (err, result, fields) {
   
           // if (err) throw err;
           ////console.log(result[0]['fan_status']);
@@ -802,7 +865,7 @@ io.sockets.on("connection", socket => {
   
       ////console.log(calculateAverage([12,21,12,32,12,45,65,12,11]));
   
-      con.query(`SELECT * FROM analytics1`, function (err, result, fields) {
+      con.query(`SELECT * FROM sensorreadings1`, function (err, result, fields) {
       
   
         // for (let index = 0; index < result.length; index++) {
@@ -825,41 +888,41 @@ io.sockets.on("connection", socket => {
   
         for (let j = 0; j < result.length; j++) {
           let date = result[j]['DATE'].toLocaleDateString();
-          let ph = result[j]['PH'];
+          let ph = result[j]['Ph_Value'];
           if (args[0] == date && date != null) {
-            storage[0].push(result[j]['WATER_TEMP']);
-            storage1[0].push(result[j]['PH']);
-            storage2[0].push(result[j]['EC']);
+            storage[0].push(result[j]['Water_Temperature']);
+            storage1[0].push(result[j]['Ph_Value']);
+            storage2[0].push(result[j]['Ec_Value']);
           }
           else if (args[1] == date && date != null) {
-            storage[1].push(result[j]['WATER_TEMP']);
-            storage1[1].push(result[j]['PH']);
-            storage2[1].push(result[j]['EC']);
+            storage[1].push(result[j]['Water_Temperature']);
+            storage1[1].push(result[j]['Ph_Value']);
+            storage2[1].push(result[j]['Ec_Value']);
           }
           else if (args[2] == date && date != null) {
-            storage[2].push(result[j]['WATER_TEMP']);
-            storage1[2].push(result[j]['PH']);
-            storage2[2].push(result[j]['EC']);
+            storage[2].push(result[j]['Water_Temperature']);
+            storage1[2].push(result[j]['Ph_Value']);
+            storage2[2].push(result[j]['Ec_Value']);
           }
           else if (args[3] == date && date != null) {
-            storage[3].push(result[j]['WATER_TEMP']);
-            storage1[3].push(result[j]['PH']);
-            storage2[3].push(result[j]['EC']);
+            storage[3].push(result[j]['Water_Temperature']);
+            storage1[3].push(result[j]['Ph_Value']);
+            storage2[3].push(result[j]['Ec_Value']);
           }
           else if (args[4] == date && date != null) {
-            storage[4].push(result[j]['WATER_TEMP']);
-            storage1[4].push(result[j]['PH']);
-            storage2[4].push(result[j]['EC']);
+            storage[4].push(result[j]['Water_Temperature']);
+            storage1[4].push(result[j]['Ph_Value']);
+            storage2[4].push(result[j]['Ec_Value']);
           }
           else if (args[5] == date && date != null) {
-            storage[5].push(result[j]['WATER_TEMP']);
-            storage1[5].push(result[j]['PH']);
-            storage2[5].push(result[j]['EC']);
+            storage[5].push(result[j]['Water_Temperature']);
+            storage1[5].push(result[j]['Ph_Value']);
+            storage2[5].push(result[j]['Ec_Value']);
           }
           else if (args[6] == date && date != null) {
-            storage[6].push(result[j]['WATER_TEMP']);
-            storage1[6].push(result[j]['PH']);
-            storage2[6].push(result[j]['EC']);
+            storage[6].push(result[j]['Water_Temperature']);
+            storage1[6].push(result[j]['Ph_Value']);
+            storage2[6].push(result[j]['Ec_Value']);
           }
           else {
             storage[j] = [];
@@ -957,7 +1020,7 @@ io.sockets.on("connection", socket => {
   
       ////console.log(calculateAverage([12,21,12,32,12,45,65,12,11]));
   
-      con.query(`SELECT * FROM analytics`, function (err, result, fields) {
+      con.query(`SELECT * FROM sensorreadings2`, function (err, result, fields) {
       
   
         // for (let index = 0; index < result.length; index++) {
@@ -980,40 +1043,40 @@ io.sockets.on("connection", socket => {
   
         for (let j = 0; j < result.length; j++) {
           let date = result[j]['DATE'].toLocaleDateString();
-          let ph = result[j]['PH'];
+          let ph = result[j]['Ph_Value'];
           if (args[0] == date && date != null) {
-            storage[0].push(result[j]['ROOM_TEMP']);
-            storage1[0].push(result[j]['HUMIDITY']);
+            storage[0].push(result[j]['Room_Temp']);
+            storage1[0].push(result[j]['Humidity']);
            
           }
           else if (args[1] == date && date != null) {
-            storage[1].push(result[j]['ROOM_TEMP']);
-            storage1[1].push(result[j]['HUMIDITY']);
+            storage[1].push(result[j]['Room_Temp']);
+            storage1[1].push(result[j]['Humidity']);
            
           }
           else if (args[2] == date && date != null) {
-            storage[2].push(result[j]['ROOM_TEMP']);
-            storage1[2].push(result[j]['HUMIDITY']);
+            storage[2].push(result[j]['Room_Temp']);
+            storage1[2].push(result[j]['Humidity']);
            
           }
           else if (args[3] == date && date != null) {
-            storage[3].push(result[j]['ROOM_TEMP']);
-            storage1[3].push(result[j]['HUMIDITY']);
+            storage[3].push(result[j]['Room_Temp']);
+            storage1[3].push(result[j]['Humidity']);
           
           }
           else if (args[4] == date && date != null) {
-            storage[4].push(result[j]['ROOM_TEMP']);
-            storage1[4].push(result[j]['HUMIDITY']);
+            storage[4].push(result[j]['Room_Temp']);
+            storage1[4].push(result[j]['Humidity']);
          
           }
           else if (args[5] == date && date != null) {
-            storage[5].push(result[j]['ROOM_TEMP']);
-            storage1[5].push(result[j]['HUMIDITY']);
+            storage[5].push(result[j]['Room_Temp']);
+            storage1[5].push(result[j]['Humidity']);
           
           }
           else if (args[6] == date && date != null) {
-            storage[6].push(result[j]['ROOM_TEMP']);
-            storage1[6].push(result[j]['HUMIDITY']);
+            storage[6].push(result[j]['Room_Temp']);
+            storage1[6].push(result[j]['Humidity']);
            
           }
           else {
@@ -1073,9 +1136,9 @@ io.sockets.on("connection", socket => {
   
   var formattedStartDate = dateFormatter(startDate.toString());
   var formattedEndDate = dateFormatter(endDate.toString());
-    con.query(`SELECT * FROM analytics1 WHERE DATE >= ? AND DATE <= ? ORDER BY DATE DESC;`,[formattedStartDate,formattedEndDate], function (err, result, fields) {
+    con.query(`SELECT * FROM sensorreadings1 WHERE DATE >= ? AND DATE <= ? ORDER BY DATE DESC;`,[formattedStartDate,formattedEndDate], function (err, result, fields) {
      //console.log(result);
-     con.query(`SELECT * FROM analytics WHERE DATE >= ? AND DATE <= ? ORDER BY DATE DESC;`,[formattedStartDate,formattedEndDate], function (err, result1, fields) {
+     con.query(`SELECT * FROM sensorreadings2 WHERE DATE >= ? AND DATE <= ? ORDER BY DATE DESC;`,[formattedStartDate,formattedEndDate], function (err, result1, fields) {
       //console.log(result1);
       
        io.emit('return-data', result,result1 );
@@ -1095,7 +1158,7 @@ io.sockets.on("connection", socket => {
     var formattedStartDate = dateFormatter(startDate.toString());
     var formattedEndDate = dateFormatter(endDate.toString());
    
-       con.query(`SELECT * FROM analytics WHERE DATE >= ? AND DATE <= ? ORDER BY DATE DESC;`,[formattedStartDate,formattedEndDate], function (err, result1, fields) {
+       con.query(`SELECT * FROM sensorreadings2 WHERE DATE >= ? AND DATE <= ? ORDER BY DATE DESC;`,[formattedStartDate,formattedEndDate], function (err, result1, fields) {
         //console.log(result1);
         
          io.emit('return-data1',result1 );
@@ -1382,6 +1445,8 @@ io.sockets.on("error", e => console.log(e));
 
 
 app.use('/route', router);
+
+
 
 // home route
 app.get('/', (req, res) => {
