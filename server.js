@@ -14,7 +14,7 @@ const port = process.env.PORT || 3000;
 const http = require("http");
 const server = http.createServer(app);
 const io = require("socket.io")(server);
-
+const request = require("request");
 
 var mysql = require('mysql');
 //const { send } = require("process");
@@ -48,8 +48,9 @@ let transporter = nodemailer.createTransport({
     port: 465,
     secure: true,
     auth: {
-        user: 'flexerfly@gmail.com',
-        pass: 'hevztpyyatyhrxrb'
+        user: 'hydroponicsystem2023@gmail.com',
+        pass: 'dbnpsvffdkcypuwy'
+        
     }
 });
 
@@ -1185,7 +1186,7 @@ io.sockets.on("connection", socket => {
         con1.query(`SELECT * FROM users where email= ?`, [args], function (err, result, fields) {
 
             if (result.length > 0) {
-                io.emit('Forgot-Password-Success', "success", args);
+                socket.emit('Forgot-Password-Success', "success", args);
                 var password = result[0]['password'];
 
                 // const hash = CryptoJS.MD5(password).toString();
@@ -1209,7 +1210,7 @@ io.sockets.on("connection", socket => {
 
             }
             else {
-                io.emit('Forgot-Password-Success', "failed", args);
+                socket.emit('Forgot-Password-Success', "failed", args);
             }
 
 
@@ -1256,7 +1257,7 @@ io.sockets.on("connection", socket => {
                     from: 'hydroponicsystem2023@gmail.com', // sender address
                     to: email, // list of receivers
                     subject: 'Casa Selada account verification', // Subject line
-                    text: `Hi ${name}. Here is your verification link  http://localhost:3000/verify?code=${code}&email=${email}.`, // plain text body
+                    text: `Hi ${name}. Here is your verification link  http://192.168.1.164:3000/verify?code=${code}&email=${email}.`, // plain text body
                     //  html: '<b>Hello world?</b>' // html body
                 }, (error, info) => {
                     if (error) {
@@ -1365,16 +1366,16 @@ const renderTime = () => {
      if (result[0]['status']== "1" && result[0][day[d.getDay()]] == 1 && minutes == "30" ) {
       const url = "http://192.168.1.188/cm?cmnd=Power%20On";
     //  console.log("Water Pump is on");
-      // request.get(url, (error, response, body) => { });
+       request.get(url, (error, response, body) => { });
     }
     if (result[0][day[d.getDay()]] == 1 && result[0]['time_off'] == hour + ":" + minutes) {
       const url = "http://192.168.1.188/cm?cmnd=Power%20Off";
      
-      // request.get(url, (error, response, body) => { });
+      //request.get(url, (error, response, body) => { });
     }
-     if (result[0]['status']== "0" && result[0][day[d.getDay()]] == 1 && minutes == "00" ) {
+     if (result[0]['status']== "1" && result[0][day[d.getDay()]] == 1 && minutes == "00" ) {
       const url = "http://192.168.1.188/cm?cmnd=Power%20Off";
-      // request.get(url, (error, response, body) => { });
+       request.get(url, (error, response, body) => { });
     //  console.log("Water Pump is off");
     }
   });
@@ -1417,17 +1418,17 @@ const renderTime = () => {
       request.get(url, (error, response, body) => { });
     }
      if (result[0]['status']== "1" && result[0][day[d.getDay()]] == 1 && minutes == "30" ) {
-      const url = "http://192.168.1.188/cm?cmnd=Power%20On";
+      const url = "http://192.168.1.158/cm?cmnd=Power%20On";
    //   console.log("Aerator is on");
-      // request.get(url, (error, response, body) => { });
+       request.get(url, (error, response, body) => { });
     }
     if (result[0][day[d.getDay()]] == 1 && result[0]['time_off'] == hour + ":" + minutes) {
       const url = "http://192.168.1.158/cm?cmnd=Power%20Off";
       request.get(url, (error, response, body) => { });
     }
    if (result[0]['status']== "1" && result[0][day[d.getDay()]] == 1 && minutes == "00" ) {
-      const url = "http://192.168.1.188/cm?cmnd=Power%20Off";
-      // request.get(url, (error, response, body) => { });
+      const url = "http://192.168.1.158/cm?cmnd=Power%20Off";
+       request.get(url, (error, response, body) => { });
      // console.log("Aerator is off");
     }
   });
